@@ -24,13 +24,10 @@
  npm install @openrouter/sdk
 
 
- **SITUATIONAL**: if error type this 
-
- npm pkg set type="module"
-
- and rerun
-
- npm install @openrouter/sdk
+> **SITUATIONAL**: if error type this
+> npm pkg set type="module"
+> and rerun
+> npm install @openrouter/sdk
 
 
 

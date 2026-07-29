@@ -1,0 +1,12 @@
+curl https://openrouter.ai/api/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer -----##NASA DOCS DITO LAGAY##-----" \
+  -d '{
+  "model": "openai/gpt-4o",
+  "messages": [
+    {
+      "role": "user",
+      "content": "What is the meaning of life?"
+    }
+  ]
+}'

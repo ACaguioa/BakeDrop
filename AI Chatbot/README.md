@@ -7,6 +7,7 @@
 Open your terminal (CMD or PowerShell) and run the following commands **one by one**:
 
 \`\`\`cmd
+
 mkdir my-chatbot
 
 cd my-chatbot

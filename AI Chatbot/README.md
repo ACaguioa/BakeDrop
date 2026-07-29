@@ -8,8 +8,11 @@ Open your terminal (CMD or PowerShell) and run the following commands **one by o
 
 \`\`\`cmd
 mkdir my-chatbot
+
 cd my-chatbot
+
 npm init -y
+
 npm install @openrouter/sdk
 \`\`\`
 

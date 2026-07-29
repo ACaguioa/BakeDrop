@@ -26,9 +26,13 @@
 
 
 > **SITUATIONAL**: if error type this
+> 
 > npm pkg set type="module"
+>
 > and rerun
+>
 > npm install @openrouter/sdk
+>
 > if success proceed to **step 3**
 
  ## step 3: in Visual Studio Code(VS Code) locate your file my-chatbot.

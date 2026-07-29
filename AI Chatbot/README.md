@@ -1,5 +1,5 @@
 # AI INTEGRATION (Ling-3.0 Flash) GUIDE
-*Note: This configuration uses Node.js (using oprnrouter)
+*Note: This configuration uses Node.js (using openrouter)
 
 ---
 

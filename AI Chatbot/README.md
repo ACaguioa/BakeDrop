@@ -44,8 +44,10 @@
  ## step 4: back to cmd and type
  node bot.js
 
- > **Situational**: if cannot found module
+> **Situational**: if cannot found module
+>
 > type: cd my-chatbot
+>
 > node bot.js
 
 ## AND DONE!

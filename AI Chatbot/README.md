@@ -1,5 +1,5 @@
 # AI INTEGRATION (Ling-3.0 Flash)
-# need Node.js 
+ need Node.js 
 
 # GUIDE ON INSTALLING (My Chatbot KEY is FREE to use for school project purpose)
  Configuring Ling in NODE AND VSCODE

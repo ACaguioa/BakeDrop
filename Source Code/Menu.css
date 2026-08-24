@@ -1,0 +1,51 @@
+/* --- MENU TITLE --- */
+.featured-section {
+  padding-top: 3rem;
+  padding-bottom: 2rem;
+  text-align: center;
+}
+
+.section-title-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin: 0 auto;
+}
+
+.section-title {
+  font-family: 'Georgia', serif;
+  font-size: 1.8rem;
+  font-weight: 400;
+  letter-spacing: 2px;
+  margin: 0;
+  color: #f5f0e6;
+  text-transform: uppercase;
+}
+
+.line {
+  flex-grow: 1;
+  height: 1px;
+  background-color: #f5f0e6;
+  opacity: 0.5;
+  max-width: 150px; /* Keeps the lines clean */
+}
+
+/* --- PRODUCT GRID --- */
+.product-grid-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center; /* This puts them in the center */
+  gap: 2rem;
+  padding: 0 2rem 4rem 2rem;
+  max-width: 1200px;      /* <--- THIS IS THE KEY */
+  margin: 0 auto;         /* <--- AND THIS */
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .product-grid-container {
+    gap: 1.5rem;
+    padding: 0 1rem 4rem 1rem;
+  }
+}

@@ -94,6 +94,10 @@
   background-color: rgba(64, 64, 64, 0.8);
 }
 
+.mac-active {
+  background-color: rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
+}
 /* Icon Sizing */
 .mac-icon {
   width: 20px;

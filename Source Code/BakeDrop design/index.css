@@ -1,0 +1,93 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+:root {
+  --black: #15120f;
+  --espresso: #211a15;
+  --brown: #3a2a20;
+  --gold: #b89a68;
+  --gold-light: #d2bd91;
+  --cream: #ab8642;
+  --muted: #aaa094;
+  --line: rgba(243, 238, 229, 0.16);
+}
+
+/* =========================
+   LIGHT MODE
+========================= */
+
+body.light-mode {
+  --black: #f5f0e8;
+  --espresso: #e9e0d4;
+  --brown: #d8c8b5;
+  --gold: #9a7137;
+  --gold-light: #805d2d;
+  --cream: #ba7b37;
+  --muted: #756d64;
+  --line: rgba(80, 59, 39, 0.15);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--black);
+  color: var(--cream);
+  font-family: "DM Sans", sans-serif;
+  font-weight: 300;
+
+  transition:
+    background-color 0.35s ease,
+    color 0.35s ease;
+}
+
+/* =========================
+   THEME TRANSITION
+========================= */
+
+.navbar,
+.top-search,
+.settings-panel,
+.settings-button,
+.category-filter button,
+.product-image,
+.cart-summary,
+.pickup-location,
+.location-selected,
+.order-type button,
+.form-container input,
+.form-container select,
+.form-container textarea,
+.footer {
+  transition:
+    background-color 0.35s ease,
+    color 0.35s ease,
+    border-color 0.35s ease;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+img {
+  display: block;
+  width: 100%;
+}

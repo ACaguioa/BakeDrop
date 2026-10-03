@@ -5,436 +5,1426 @@ const fs = require("fs");
 
 const router = express.Router();
 
-const authenticateToken = require("../middleware/authMiddleware");
-const adminOnly = require("../middleware/adminMiddleware");
+const authenticateToken =
+  require("../middleware/authMiddleware");
+
+const adminOnly =
+  require("../middleware/adminMiddleware");
 
 
 // =====================================================
-// PRODUCT IMAGE UPLOAD SETTINGS
+// DATABASE
 // =====================================================
 
-const uploadDirectory = path.join(
-  __dirname,
-  "../uploads/products"
-);
+const getDatabase = (req) => {
+  return req.app.locals.db;
+};
 
 
-// Create upload folder automatically
-if (!fs.existsSync(uploadDirectory)) {
-  fs.mkdirSync(uploadDirectory, {
-    recursive: true,
-  });
+// =====================================================
+// PRODUCT IMAGE DIRECTORIES
+// =====================================================
+
+// Existing admin-uploaded images
+const uploadDirectory =
+  path.join(
+    __dirname,
+    "../uploads/products"
+  );
+
+
+// New product images
+// Saves directly to:
+//
+// BAKEDROP/src/assets/products
+const frontendProductDirectory =
+  path.join(
+    __dirname,
+    "../../src/assets/products"
+  );
+
+
+// =====================================================
+// CREATE DIRECTORIES
+// =====================================================
+
+if (
+  !fs.existsSync(
+    uploadDirectory
+  )
+) {
+  fs.mkdirSync(
+    uploadDirectory,
+    {
+      recursive: true,
+    }
+  );
+}
+
+
+if (
+  !fs.existsSync(
+    frontendProductDirectory
+  )
+) {
+  fs.mkdirSync(
+    frontendProductDirectory,
+    {
+      recursive: true,
+    }
+  );
 }
 
 
 // =====================================================
-// MULTER STORAGE
+// IMAGE FILE FILTER
 // =====================================================
 
-const storage = multer.diskStorage({
+const imageFileFilter = (
+  req,
+  file,
+  cb
+) => {
 
-  destination: (req, file, cb) => {
-    cb(null, uploadDirectory);
-  },
-
-  filename: (req, file, cb) => {
-
-    const extension =
-      path.extname(file.originalname)
-        .toLowerCase();
-
-    const productId =
-      req.params.id;
-
-    const filename =
-      `product-${productId}-${Date.now()}${extension}`;
-
-    cb(null, filename);
-  },
-
-});
+  const allowedTypes = [
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "image/jpg",
+  ];
 
 
-// =====================================================
-// FILE VALIDATION
-// =====================================================
+  if (
+    allowedTypes.includes(
+      file.mimetype
+    )
+  ) {
 
-const upload = multer({
+    cb(
+      null,
+      true
+    );
 
-  storage,
+  } else {
 
-  limits: {
-    fileSize: 5 * 1024 * 1024,
-  },
-
-  fileFilter: (req, file, cb) => {
-
-    const allowedTypes = [
-      "image/jpeg",
-      "image/png",
-      "image/webp",
-      "image/jpg",
-    ];
-
-    if (
-      allowedTypes.includes(
-        file.mimetype
+    cb(
+      new Error(
+        "Only JPG, JPEG, PNG, and WEBP images are allowed."
       )
-    ) {
+    );
 
-      cb(null, true);
+  }
 
-    } else {
+};
+
+
+// =====================================================
+// EXISTING MULTER STORAGE
+//
+// Used by:
+// PUT /api/products/:id/image
+//
+// Existing products keep using:
+// backend/uploads/products
+// =====================================================
+
+const storage =
+  multer.diskStorage({
+
+    destination: (
+      req,
+      file,
+      cb
+    ) => {
 
       cb(
-        new Error(
-          "Only JPG, JPEG, PNG, and WEBP images are allowed."
+        null,
+        uploadDirectory
+      );
+
+    },
+
+
+    filename: (
+      req,
+      file,
+      cb
+    ) => {
+
+      const extension =
+        path.extname(
+          file.originalname
+        ).toLowerCase();
+
+
+      const productId =
+        req.params.id;
+
+
+      const filename =
+        `product-${productId}-${Date.now()}${extension}`;
+
+
+      cb(
+        null,
+        filename
+      );
+
+    },
+
+  });
+
+
+// =====================================================
+// EXISTING IMAGE UPLOAD
+// =====================================================
+
+const upload =
+  multer({
+
+    storage,
+
+    limits: {
+      fileSize:
+        5 * 1024 * 1024,
+    },
+
+    fileFilter:
+      imageFileFilter,
+
+  });
+
+
+// =====================================================
+// NEW PRODUCT IMAGE STORAGE
+//
+// New products are saved to:
+//
+// BAKEDROP/src/assets/products
+// =====================================================
+
+const newProductStorage =
+  multer.diskStorage({
+
+    destination: (
+      req,
+      file,
+      cb
+    ) => {
+
+      cb(
+        null,
+        frontendProductDirectory
+      );
+
+    },
+
+
+    filename: (
+      req,
+      file,
+      cb
+    ) => {
+
+      const extension =
+        path.extname(
+          file.originalname
+        ).toLowerCase();
+
+
+      const safeName =
+        String(
+          req.body.name ||
+          "product"
         )
+          .trim()
+          .toLowerCase()
+          .replace(
+            /[^a-z0-9]+/g,
+            "-"
+          )
+          .replace(
+            /^-+|-+$/g,
+            ""
+          );
+
+
+      const filename =
+        `${safeName || "product"}-${Date.now()}${extension}`;
+
+
+      cb(
+        null,
+        filename
+      );
+
+    },
+
+  });
+
+
+// =====================================================
+// NEW PRODUCT IMAGE UPLOAD
+// =====================================================
+
+const uploadNewProduct =
+  multer({
+
+    storage:
+      newProductStorage,
+
+    limits: {
+
+      fileSize:
+        5 * 1024 * 1024,
+
+    },
+
+    fileFilter:
+      imageFileFilter,
+
+  });
+
+
+// =====================================================
+// DELETE UPLOADED FILE HELPER
+// =====================================================
+
+const deleteUploadedFile = (
+  file
+) => {
+
+  if (
+    !file ||
+    !file.path
+  ) {
+    return;
+  }
+
+
+  if (
+    fs.existsSync(
+      file.path
+    )
+  ) {
+
+    try {
+
+      fs.unlinkSync(
+        file.path
+      );
+
+    } catch (error) {
+
+      console.error(
+        "FAILED TO DELETE UPLOADED FILE:",
+        error
       );
 
     }
 
-  },
+  }
 
-});
-
-/* =====================================================
-   GET ALL PRODUCTS
-   GET /api/products
-   GET /api/products?date=2026-10-05
-
-   IMPORTANT:
-   Product availability is based on the CUSTOMER'S
-   SELECTED SCHEDULE DATE, not order creation date.
-===================================================== */
-
-router.get("/", async (req, res) => {
-  try {
-    const db = req.app.locals.db;
-
-    /*
-      If a date is supplied:
-        /api/products?date=2026-10-05
-
-      use that date.
-
-      Otherwise default to today's date.
-    */
-    const requestedDate =
-      req.query.date ||
-      new Date().toISOString().split("T")[0];
+};
 
 
-    /* -------------------------------------------------
-       VALIDATE DATE FORMAT
-    ------------------------------------------------- */
+// =====================================================
+// GET ALL PRODUCTS
+//
+// GET /api/products
+// GET /api/products?date=2026-10-05
+//
+// Customer-facing product route
+// =====================================================
 
-    if (
-      !/^\d{4}-\d{2}-\d{2}$/.test(
-        requestedDate
-      )
-    ) {
-      return res.status(400).json({
-        message:
-          "Invalid schedule date. Use YYYY-MM-DD.",
+router.get(
+  "/",
+  async (
+    req,
+    res
+  ) => {
+
+    try {
+
+      const db =
+        getDatabase(req);
+
+
+      const requestedDate =
+        req.query.date ||
+        new Date()
+          .toISOString()
+          .split("T")[0];
+
+
+      // ===============================================
+      // VALIDATE DATE
+      // ===============================================
+
+      if (
+        !/^\d{4}-\d{2}-\d{2}$/.test(
+          requestedDate
+        )
+      ) {
+
+        return res.status(400).json({
+
+          success:
+            false,
+
+          message:
+            "Invalid schedule date. Use YYYY-MM-DD.",
+
+        });
+
+      }
+
+
+      // ===============================================
+      // GET PRODUCTS
+      // ===============================================
+
+      const [
+        products
+      ] = await db.query(
+        `
+        SELECT
+
+          p.id,
+
+          p.category_id,
+
+          c.name AS category_name,
+
+          p.name,
+
+          p.description,
+
+          p.price,
+
+          p.unit_description,
+
+          p.image,
+
+          p.customizable,
+
+          p.daily_order_limit,
+
+          p.is_available,
+
+
+          COALESCE(
+            psc.maximum_quantity,
+            0
+          ) AS maximum_quantity,
+
+
+          COALESCE(
+            psc.is_disabled,
+            0
+          ) AS product_date_disabled,
+
+
+          COALESCE(
+            (
+              SELECT
+                SUM(
+                  oi.quantity
+                )
+
+              FROM order_items oi
+
+              INNER JOIN orders o
+                ON o.id =
+                  oi.order_id
+
+              WHERE
+                oi.product_id =
+                  p.id
+
+                AND DATE(
+                  o.order_date
+                ) = ?
+
+                AND o.status <>
+                  'cancelled'
+            ),
+            0
+          ) AS reserved_quantity,
+
+
+          (
+            SELECT
+              COUNT(*)
+
+            FROM orders o2
+
+            WHERE
+              DATE(
+                o2.order_date
+              ) = ?
+
+              AND o2.status <>
+                'cancelled'
+          ) AS reserved_orders,
+
+
+          COALESCE(
+            (
+              SELECT
+                sc.maximum_orders
+
+              FROM schedule_capacity sc
+
+              WHERE
+                sc.schedule_date =
+                  ?
+
+              LIMIT 1
+            ),
+            30
+          ) AS maximum_orders,
+
+
+          COALESCE(
+            (
+              SELECT
+                sc.is_disabled
+
+              FROM schedule_capacity sc
+
+              WHERE
+                sc.schedule_date =
+                  ?
+
+              LIMIT 1
+            ),
+            0
+          ) AS schedule_disabled
+
+
+        FROM products p
+
+
+        LEFT JOIN categories c
+          ON c.id =
+            p.category_id
+
+
+        LEFT JOIN
+          product_schedule_capacity psc
+
+          ON psc.product_id =
+            p.id
+
+          AND psc.schedule_date =
+            ?
+
+
+        ORDER BY
+          p.id ASC
+        `,
+        [
+
+          requestedDate,
+
+          requestedDate,
+
+          requestedDate,
+
+          requestedDate,
+
+          requestedDate,
+
+        ]
+      );
+
+
+      // ===============================================
+      // FORMAT PRODUCTS
+      // ===============================================
+
+      const formattedProducts =
+        products.map(
+          (
+            product
+          ) => {
+
+            const maximumQuantity =
+              Number(
+                product.maximum_quantity ||
+                0
+              );
+
+
+            const reservedQuantity =
+              Number(
+                product.reserved_quantity ||
+                0
+              );
+
+
+            const maximumOrders =
+              Number(
+                product.maximum_orders ||
+                0
+              );
+
+
+            const reservedOrders =
+              Number(
+                product.reserved_orders ||
+                0
+              );
+
+
+            const remainingQuantity =
+              maximumQuantity > 0
+
+                ? Math.max(
+                    maximumQuantity -
+                      reservedQuantity,
+                    0
+                  )
+
+                : null;
+
+
+            const remainingOrderSlots =
+              Math.max(
+                maximumOrders -
+                  reservedOrders,
+                0
+              );
+
+
+            const productDateDisabled =
+              Boolean(
+                product.product_date_disabled
+              );
+
+
+            const scheduleDisabled =
+              Boolean(
+                product.schedule_disabled
+              );
+
+
+            const productLimitReached =
+              maximumQuantity > 0 &&
+              remainingQuantity === 0;
+
+
+            const overallCapacityReached =
+              remainingOrderSlots === 0;
+
+
+            const canOrder =
+              Boolean(
+                product.is_available
+              ) &&
+              !productDateDisabled &&
+              !scheduleDisabled &&
+              !productLimitReached &&
+              !overallCapacityReached;
+
+
+            return {
+
+              id:
+                Number(
+                  product.id
+                ),
+
+              category_id:
+                Number(
+                  product.category_id
+                ),
+
+              category_name:
+                product.category_name,
+
+              name:
+                product.name,
+
+              description:
+                product.description,
+
+              price:
+                Number(
+                  product.price
+                ),
+
+              unit_description:
+                product.unit_description,
+
+              image:
+                product.image,
+
+              customizable:
+                Boolean(
+                  product.customizable
+                ),
+
+              is_available:
+                Boolean(
+                  product.is_available
+                ),
+
+              schedule_date:
+                requestedDate,
+
+              daily_order_limit:
+                Number(
+                  product.daily_order_limit ||
+                  0
+                ),
+
+              maximum_quantity:
+                maximumQuantity,
+
+              reserved_quantity:
+                reservedQuantity,
+
+              remaining_quantity:
+                remainingQuantity,
+
+              product_date_disabled:
+                productDateDisabled,
+
+              product_limit_reached:
+                productLimitReached,
+
+              maximum_orders:
+                maximumOrders,
+
+              reserved_orders:
+                reservedOrders,
+
+              remaining_order_slots:
+                remainingOrderSlots,
+
+              schedule_disabled:
+                scheduleDisabled,
+
+              overall_capacity_reached:
+                overallCapacityReached,
+
+              can_order:
+                canOrder,
+
+            };
+
+          }
+        );
+
+
+      // ===============================================
+      // SCHEDULE SUMMARY
+      // ===============================================
+
+      const firstProduct =
+        formattedProducts[0];
+
+
+      const scheduleSummary = {
+
+        date:
+          requestedDate,
+
+        maximum_orders:
+          firstProduct
+            ? firstProduct.maximum_orders
+            : 30,
+
+        reserved_orders:
+          firstProduct
+            ? firstProduct.reserved_orders
+            : 0,
+
+        remaining_order_slots:
+          firstProduct
+            ? firstProduct.remaining_order_slots
+            : 30,
+
+        disabled:
+          firstProduct
+            ? firstProduct.schedule_disabled
+            : false,
+
+      };
+
+
+      // ===============================================
+      // RESPONSE
+      // ===============================================
+
+      return res.json({
+
+        success:
+          true,
+
+        schedule:
+          scheduleSummary,
+
+        products:
+          formattedProducts,
+
       });
+
+
+    } catch (error) {
+
+      console.error(
+        "GET PRODUCTS ERROR:",
+        error
+      );
+
+
+      return res.status(500).json({
+
+        success:
+          false,
+
+        message:
+          "Failed to load products.",
+
+      });
+
     }
 
-
-    /* =================================================
-       GET PRODUCTS
-    ================================================= */
-
-    const [products] = await db.query(
-      `
-      SELECT
-        p.id,
-        p.category_id,
-        c.name AS category_name,
-        p.name,
-        p.description,
-        p.price,
-        p.unit_description,
-        p.image,
-        p.customizable,
-        p.daily_order_limit,
-        p.is_available,
-
-        /*
-          PRODUCT-SPECIFIC CAPACITY
-          FOR THE SELECTED SCHEDULE DATE
-        */
-        COALESCE(
-          psc.maximum_quantity,
-          0
-        ) AS maximum_quantity,
-
-        COALESCE(
-          psc.is_disabled,
-          0
-        ) AS product_date_disabled,
+  }
+);
 
 
-        /*
-          HOW MANY UNITS OF THIS PRODUCT
-          ARE ALREADY RESERVED FOR THE
-          SELECTED SCHEDULE DATE
-        */
-        COALESCE(
-          (
-            SELECT SUM(oi.quantity)
+// =====================================================
+// GET ACTIVE PRODUCT CATEGORIES
+//
+// GET /api/products/categories
+//
+// Used by:
+// AdminProducts.jsx
+// =====================================================
 
-            FROM order_items oi
+router.get(
+  "/categories",
+  async (
+    req,
+    res
+  ) => {
 
-            INNER JOIN orders o
-              ON o.id = oi.order_id
+    try {
 
-            WHERE oi.product_id = p.id
+      const db =
+        getDatabase(req);
 
-              AND DATE(o.order_date) = ?
 
-              AND o.status <> 'cancelled'
+      const [
+        categories
+      ] = await db.query(
+        `
+        SELECT
+
+          id,
+
+          name,
+
+          description,
+
+          is_active
+
+        FROM categories
+
+        WHERE
+          is_active = 1
+
+        ORDER BY
+          id ASC
+        `
+      );
+
+
+      return res.json({
+
+        success:
+          true,
+
+        categories:
+          categories.map(
+            (
+              category
+            ) => ({
+
+              id:
+                Number(
+                  category.id
+                ),
+
+              name:
+                category.name,
+
+              description:
+                category.description,
+
+              is_active:
+                Boolean(
+                  category.is_active
+                ),
+
+            })
           ),
-          0
-        ) AS reserved_quantity,
+
+      });
 
 
-        /*
-          TOTAL ORDERS RESERVED
-          FOR THE SELECTED SCHEDULE DATE
-        */
+    } catch (error) {
+
+      console.error(
+        "GET PRODUCT CATEGORIES ERROR:",
+        error
+      );
+
+
+      return res.status(500).json({
+
+        success:
+          false,
+
+        message:
+          "Failed to load product categories.",
+
+      });
+
+    }
+
+  }
+);
+
+
+// =====================================================
+// ADMIN — CREATE NEW PRODUCT
+//
+// POST /api/products
+//
+// FormData:
+//
+// category_id
+// name
+// description
+// unit_description
+// customizable
+// price
+// is_available
+// image
+//
+// New image is saved to:
+//
+// BAKEDROP/src/assets/products
+// =====================================================
+
+router.post(
+  "/",
+  authenticateToken,
+  adminOnly,
+  uploadNewProduct.single(
+    "image"
+  ),
+  async (
+    req,
+    res
+  ) => {
+
+    try {
+
+      const db =
+        getDatabase(req);
+
+
+      // ===============================================
+      // GET FORM DATA
+      // ===============================================
+
+      const {
+
+        category_id,
+
+        name,
+
+        description,
+
+        unit_description,
+
+        customizable,
+
+        price,
+
+        is_available,
+
+      } = req.body;
+
+
+      // ===============================================
+      // VALIDATE CATEGORY
+      // ===============================================
+
+      const categoryId =
+        Number(
+          category_id
+        );
+
+
+      if (
+        !Number.isInteger(
+          categoryId
+        ) ||
+        categoryId <= 0
+      ) {
+
+        deleteUploadedFile(
+          req.file
+        );
+
+
+        return res.status(400).json({
+
+          success:
+            false,
+
+          message:
+            "A valid product category is required.",
+
+        });
+
+      }
+
+
+      // ===============================================
+      // CHECK CATEGORY
+      // ===============================================
+
+      const [
+        categories
+      ] = await db.query(
+        `
+        SELECT
+
+          id,
+
+          name
+
+        FROM categories
+
+        WHERE
+          id = ?
+
+          AND is_active = 1
+
+        LIMIT 1
+        `,
+        [
+          categoryId
+        ]
+      );
+
+
+      if (
+        categories.length ===
+        0
+      ) {
+
+        deleteUploadedFile(
+          req.file
+        );
+
+
+        return res.status(400).json({
+
+          success:
+            false,
+
+          message:
+            "Selected category does not exist or is inactive.",
+
+        });
+
+      }
+
+
+      // ===============================================
+      // VALIDATE NAME
+      // ===============================================
+
+      const productName =
+        String(
+          name || ""
+        ).trim();
+
+
+      if (
+        !productName
+      ) {
+
+        deleteUploadedFile(
+          req.file
+        );
+
+
+        return res.status(400).json({
+
+          success:
+            false,
+
+          message:
+            "Product name is required.",
+
+        });
+
+      }
+
+
+      // ===============================================
+      // VALIDATE DESCRIPTION
+      // ===============================================
+
+      const productDescription =
+        String(
+          description || ""
+        ).trim();
+
+
+      if (
+        !productDescription
+      ) {
+
+        deleteUploadedFile(
+          req.file
+        );
+
+
+        return res.status(400).json({
+
+          success:
+            false,
+
+          message:
+            "Product description is required.",
+
+        });
+
+      }
+
+
+      // ===============================================
+      // UNIT DESCRIPTION
+      // ===============================================
+
+      const productUnitDescription =
+        String(
+          unit_description || ""
+        ).trim();
+
+
+      // ===============================================
+      // PRICE
+      // ===============================================
+
+      const productPrice =
+        Number(
+          price
+        );
+
+
+      if (
+        !Number.isFinite(
+          productPrice
+        ) ||
+        productPrice < 0
+      ) {
+
+        deleteUploadedFile(
+          req.file
+        );
+
+
+        return res.status(400).json({
+
+          success:
+            false,
+
+          message:
+            "A valid product price is required.",
+
+        });
+
+      }
+
+
+      // ===============================================
+      // IMAGE
+      // ===============================================
+
+      if (
+        !req.file
+      ) {
+
+        return res.status(400).json({
+
+          success:
+            false,
+
+          message:
+            "Product image is required.",
+
+        });
+
+      }
+
+
+      // ===============================================
+      // CUSTOMIZABLE
+      // ===============================================
+
+      const isCustomizable =
+        customizable ===
+          "true" ||
+
+        customizable ===
+          true ||
+
+        customizable ===
+          "1" ||
+
+        customizable ===
+          1;
+
+
+      // ===============================================
+      // AVAILABILITY
+      // ===============================================
+
+      const available =
+        is_available ===
+          "true" ||
+
+        is_available ===
+          true ||
+
+        is_available ===
+          "1" ||
+
+        is_available ===
+          1;
+
+
+      // ===============================================
+      // IMAGE DATABASE PATH
+      // ===============================================
+
+      const imagePath =
+        `/src-assets/products/${req.file.filename}`;
+
+
+      // ===============================================
+      // INSERT PRODUCT
+      //
+      // daily_order_limit remains 0 because
+      // your current system uses schedule capacity.
+      // ===============================================
+
+      const [
+        result
+      ] = await db.query(
+        `
+        INSERT INTO products
         (
-          SELECT COUNT(*)
+          category_id,
 
-          FROM orders o2
+          name,
 
-          WHERE DATE(o2.order_date) = ?
+          description,
 
-            AND o2.status <> 'cancelled'
-        ) AS reserved_orders,
+          price,
 
+          unit_description,
 
-        /*
-          OVERALL DATE CAPACITY
+          image,
 
-          If no schedule_capacity record exists,
-          default to 30 orders.
-        */
-        COALESCE(
-          (
-            SELECT
-              sc.maximum_orders
+          customizable,
 
-            FROM schedule_capacity sc
+          daily_order_limit,
 
-            WHERE sc.schedule_date = ?
+          is_available
+        )
 
-            LIMIT 1
-          ),
-          30
-        ) AS maximum_orders,
+        VALUES
+        (
+          ?,
 
+          ?,
 
-        /*
-          WHETHER THE ENTIRE DATE
-          HAS BEEN DISABLED
-        */
-        COALESCE(
-          (
-            SELECT
-              sc.is_disabled
+          ?,
 
-            FROM schedule_capacity sc
+          ?,
 
-            WHERE sc.schedule_date = ?
+          ?,
 
-            LIMIT 1
-          ),
-          0
-        ) AS schedule_disabled
+          ?,
 
+          ?,
 
-      FROM products p
+          ?,
 
+          ?
+        )
+        `,
+        [
 
-      LEFT JOIN categories c
-        ON c.id = p.category_id
+          categoryId,
 
+          productName,
 
-      /*
-        GET PRODUCT-SPECIFIC CAPACITY
-        FOR THE SELECTED DATE
-      */
-      LEFT JOIN product_schedule_capacity psc
-        ON psc.product_id = p.id
+          productDescription,
 
-        AND psc.schedule_date = ?
+          productPrice,
 
+          productUnitDescription ||
+            null,
 
-      ORDER BY p.id ASC
-      `,
-      [
-        requestedDate,
-        requestedDate,
-        requestedDate,
-        requestedDate,
-        requestedDate,
-      ]
-    );
+          imagePath,
+
+          isCustomizable
+            ? 1
+            : 0,
+
+          0,
+
+          available
+            ? 1
+            : 0,
+
+        ]
+      );
 
 
-    /* =================================================
-       FORMAT PRODUCTS
-    ================================================= */
+      // ===============================================
+      // GET CREATED PRODUCT
+      // ===============================================
 
-    const formattedProducts =
-      products.map((product) => {
+      const [
+        products
+      ] = await db.query(
+        `
+        SELECT
 
-        /*
-          PRODUCT DATE CAPACITY
-        */
-        const maximumQuantity =
-          Number(
-            product.maximum_quantity || 0
-          );
+          p.id,
 
+          p.category_id,
 
-        /*
-          PRODUCT QUANTITY ALREADY
-          RESERVED FOR SELECTED DATE
-        */
-        const reservedQuantity =
-          Number(
-            product.reserved_quantity || 0
-          );
+          c.name AS category_name,
 
+          p.name,
 
-        /*
-          OVERALL DAILY ORDER CAPACITY
-        */
-        const maximumOrders =
-          Number(
-            product.maximum_orders || 0
-          );
+          p.description,
 
+          p.price,
 
-        /*
-          TOTAL ORDERS ALREADY
-          RESERVED FOR SELECTED DATE
-        */
-        const reservedOrders =
-          Number(
-            product.reserved_orders || 0
-          );
+          p.unit_description,
 
+          p.image,
 
-        /*
-          PRODUCT REMAINING QUANTITY
+          p.customizable,
 
-          0 = unlimited
-        */
-        const remainingQuantity =
-          maximumQuantity > 0
-            ? Math.max(
-                maximumQuantity -
-                  reservedQuantity,
-                0
-              )
-            : null;
+          p.daily_order_limit,
+
+          p.is_available,
+
+          p.created_at,
+
+          p.updated_at
+
+        FROM products p
+
+        LEFT JOIN categories c
+          ON c.id =
+            p.category_id
+
+        WHERE
+          p.id = ?
+
+        LIMIT 1
+        `,
+        [
+          result.insertId
+        ]
+      );
 
 
-        /*
-          REMAINING TOTAL ORDER SLOTS
-        */
-        const remainingOrderSlots =
-          Math.max(
-            maximumOrders -
-              reservedOrders,
-            0
-          );
+      if (
+        products.length ===
+        0
+      ) {
+
+        deleteUploadedFile(
+          req.file
+        );
 
 
-        /*
-          PRODUCT DISABLED FOR
-          THIS SPECIFIC DATE
-        */
-        const productDateDisabled =
-          Boolean(
-            product.product_date_disabled
-          );
+        return res.status(500).json({
+
+          success:
+            false,
+
+          message:
+            "Product was created but could not be retrieved.",
+
+        });
+
+      }
 
 
-        /*
-          ENTIRE DATE DISABLED
-        */
-        const scheduleDisabled =
-          Boolean(
-            product.schedule_disabled
-          );
+      const product =
+        products[0];
 
 
-        /*
-          PRODUCT CAPACITY REACHED
-        */
-        const productLimitReached =
-          maximumQuantity > 0 &&
-          remainingQuantity === 0;
+      // ===============================================
+      // RESPONSE
+      // ===============================================
 
+      return res.status(201).json({
 
-        /*
-          OVERALL DATE CAPACITY REACHED
-        */
-        const overallCapacityReached =
-          remainingOrderSlots === 0;
+        success:
+          true,
 
+        message:
+          "Product created successfully.",
 
-        /*
-          FINAL CUSTOMER-FACING AVAILABILITY
-        */
-        const canOrder =
-          Boolean(
-            product.is_available
-          ) &&
-          !productDateDisabled &&
-          !scheduleDisabled &&
-          !productLimitReached &&
-          !overallCapacityReached;
+        product: {
 
-
-        return {
-          /* -----------------------------------------
-             BASIC PRODUCT DATA
-          ----------------------------------------- */
+          ...product,
 
           id:
-            product.id,
+            Number(
+              product.id
+            ),
 
           category_id:
-            product.category_id,
-
-          category_name:
-            product.category_name,
-
-          name:
-            product.name,
-
-          description:
-            product.description,
+            Number(
+              product.category_id
+            ),
 
           price:
             Number(
               product.price
             ),
 
-          unit_description:
-            product.unit_description,
-
-          image:
-            product.image,
-
           customizable:
             Boolean(
               product.customizable
+            ),
+
+          daily_order_limit:
+            Number(
+              product.daily_order_limit
             ),
 
           is_available:
@@ -442,171 +1432,71 @@ router.get("/", async (req, res) => {
               product.is_available
             ),
 
+        },
 
-          /* -----------------------------------------
-             SELECTED SCHEDULE DATE
-          ----------------------------------------- */
-
-          schedule_date:
-            requestedDate,
-
-
-          /* -----------------------------------------
-             LEGACY PRODUCT LIMIT
-             Kept for backwards compatibility.
-
-             This is NOT used for preorder capacity.
-          ----------------------------------------- */
-
-          daily_order_limit:
-            Number(
-              product.daily_order_limit || 0
-            ),
-
-
-          /* -----------------------------------------
-             PRODUCT-SPECIFIC DATE CAPACITY
-          ----------------------------------------- */
-
-          maximum_quantity:
-            maximumQuantity,
-
-          reserved_quantity:
-            reservedQuantity,
-
-          remaining_quantity:
-            remainingQuantity,
-
-          product_date_disabled:
-            productDateDisabled,
-
-          product_limit_reached:
-            productLimitReached,
-
-
-          /* -----------------------------------------
-             OVERALL DATE CAPACITY
-          ----------------------------------------- */
-
-          maximum_orders:
-            maximumOrders,
-
-          reserved_orders:
-            reservedOrders,
-
-          remaining_order_slots:
-            remainingOrderSlots,
-
-          schedule_disabled:
-            scheduleDisabled,
-
-          overall_capacity_reached:
-            overallCapacityReached,
-
-
-          /* -----------------------------------------
-             FINAL ORDER STATUS
-          ----------------------------------------- */
-
-          can_order:
-            canOrder,
-        };
       });
 
 
-    /* =================================================
-       SCHEDULE SUMMARY
-    ================================================= */
+    } catch (error) {
 
-    const firstProduct =
-      formattedProducts[0];
-
-
-    const scheduleSummary = {
-      date:
-        requestedDate,
-
-      maximum_orders:
-        firstProduct
-          ? firstProduct.maximum_orders
-          : 30,
-
-      reserved_orders:
-        firstProduct
-          ? firstProduct.reserved_orders
-          : 0,
-
-      remaining_order_slots:
-        firstProduct
-          ? firstProduct.remaining_order_slots
-          : 30,
-
-      disabled:
-        firstProduct
-          ? firstProduct.schedule_disabled
-          : false,
-    };
+      console.error(
+        "CREATE PRODUCT ERROR:",
+        error
+      );
 
 
-    /* =================================================
-       RESPONSE
-    ================================================= */
+      // ===============================================
+      // DELETE IMAGE IF DATABASE INSERT FAILED
+      // ===============================================
 
-    return res.json({
-      success: true,
-
-      schedule:
-        scheduleSummary,
-
-      products:
-        formattedProducts,
-    });
+      deleteUploadedFile(
+        req.file
+      );
 
 
-  } catch (error) {
+      return res.status(500).json({
 
-    console.error(
-      "GET PRODUCTS ERROR:",
-      error
-    );
+        success:
+          false,
 
+        message:
+          error.message ||
+          "Failed to create product.",
 
-    return res.status(500).json({
-      success: false,
+      });
 
-      message:
-        "Failed to load products.",
-    });
+    }
+
   }
-});
+);
 
 
-/* =====================================================
-   ADMIN — UPDATE OLD PRODUCT DAILY ORDER LIMIT
-   PUT /api/products/:id/daily-limit
-
-   NOTE:
-   This route is kept for compatibility with your
-   existing admin system.
-
-   The NEW preorder capacity system uses:
-   product_schedule_capacity
-
-   instead of this field.
-===================================================== */
+// =====================================================
+// ADMIN — UPDATE OLD PRODUCT DAILY ORDER LIMIT
+//
+// PUT /api/products/:id/daily-limit
+// =====================================================
 
 router.put(
   "/:id/daily-limit",
   authenticateToken,
   adminOnly,
-  async (req, res) => {
+  async (
+    req,
+    res
+  ) => {
 
     try {
 
-      const db = req.app.locals.db;
+      const db =
+        getDatabase(req);
+
 
       const productId =
-        Number(req.params.id);
+        Number(
+          req.params.id
+        );
+
 
       const dailyLimit =
         Number(
@@ -614,28 +1504,33 @@ router.put(
         );
 
 
-      /* -------------------------------------------------
-         VALIDATE PRODUCT ID
-      ------------------------------------------------- */
+      // ===============================================
+      // VALIDATE PRODUCT ID
+      // ===============================================
 
       if (
-        !Number.isInteger(productId) ||
+        !Number.isInteger(
+          productId
+        ) ||
         productId <= 0
       ) {
 
         return res.status(400).json({
+
+          success:
+            false,
+
           message:
             "Invalid product ID.",
+
         });
 
       }
 
 
-      /* -------------------------------------------------
-         VALIDATE DAILY LIMIT
-
-         0 = unlimited
-      ------------------------------------------------- */
+      // ===============================================
+      // VALIDATE DAILY LIMIT
+      // ===============================================
 
       if (
         !Number.isInteger(
@@ -645,46 +1540,65 @@ router.put(
       ) {
 
         return res.status(400).json({
+
+          success:
+            false,
+
           message:
             "Daily order limit must be a whole number greater than or equal to 0.",
+
         });
 
       }
 
 
-      /* -------------------------------------------------
-         CHECK PRODUCT EXISTS
-      ------------------------------------------------- */
+      // ===============================================
+      // CHECK PRODUCT
+      // ===============================================
 
-      const [products] =
-        await db.query(
-          `
-          SELECT
-            id,
-            name
-          FROM products
-          WHERE id = ?
-          LIMIT 1
-          `,
-          [productId]
-        );
+      const [
+        products
+      ] = await db.query(
+        `
+        SELECT
+
+          id,
+
+          name
+
+        FROM products
+
+        WHERE id = ?
+
+        LIMIT 1
+        `,
+        [
+          productId
+        ]
+      );
 
 
       if (
-        products.length === 0
+        products.length ===
+        0
       ) {
 
         return res.status(404).json({
+
+          success:
+            false,
+
           message:
             "Product not found.",
+
         });
 
       }
 
 
-      /* -------------------------------------------------
-         UPDATE OLD LIMIT
-      ------------------------------------------------- */
+      // ===============================================
+      // UPDATE
+      // ===============================================
 
       await db.query(
         `
@@ -696,24 +1610,31 @@ router.put(
         WHERE id = ?
         `,
         [
+
           dailyLimit,
+
           productId,
+
         ]
       );
 
 
-      /* -------------------------------------------------
-         RETURN UPDATED PRODUCT
-      ------------------------------------------------- */
+      // ===============================================
+      // RETURN UPDATED PRODUCT
+      // ===============================================
 
       const [
         updatedProducts
       ] = await db.query(
         `
         SELECT
+
           id,
+
           name,
+
           daily_order_limit,
+
           is_available
 
         FROM products
@@ -722,19 +1643,23 @@ router.put(
 
         LIMIT 1
         `,
-        [productId]
+        [
+          productId
+        ]
       );
 
 
       return res.json({
 
-        success: true,
+        success:
+          true,
 
         message:
           "Daily order limit updated successfully.",
 
         product:
           updatedProducts[0],
+
       });
 
 
@@ -748,10 +1673,12 @@ router.put(
 
       return res.status(500).json({
 
-        success: false,
+        success:
+          false,
 
         message:
           "Failed to update daily order limit.",
+
       });
 
     }
@@ -759,87 +1686,137 @@ router.put(
   }
 );
 
+
 // =====================================================
 // ADMIN — UPLOAD / CHANGE PRODUCT IMAGE
+//
 // PUT /api/products/:id/image
+//
+// Existing images continue to be saved to:
+//
+// backend/uploads/products
 // =====================================================
 
 router.put(
   "/:id/image",
   authenticateToken,
   adminOnly,
-  upload.single("image"),
-  async (req, res) => {
+  upload.single(
+    "image"
+  ),
+  async (
+    req,
+    res
+  ) => {
 
     try {
 
       const db =
-        req.app.locals.db;
+        getDatabase(req);
+
 
       const productId =
-        Number(req.params.id);
-
-
-      // -------------------------------------------------
-      // VALIDATE PRODUCT ID
-      // -------------------------------------------------
-
-      if (
-        !Number.isInteger(productId) ||
-        productId <= 0
-      ) {
-
-        return res.status(400).json({
-          success: false,
-          message:
-            "Invalid product ID.",
-        });
-
-      }
-
-
-      // -------------------------------------------------
-      // CHECK PRODUCT
-      // -------------------------------------------------
-
-      const [products] =
-        await db.query(
-          `
-          SELECT
-            id,
-            name,
-            image
-          FROM products
-          WHERE id = ?
-          LIMIT 1
-          `,
-          [productId]
+        Number(
+          req.params.id
         );
 
 
+      // ===============================================
+      // VALIDATE PRODUCT ID
+      // ===============================================
+
       if (
-        products.length === 0
+        !Number.isInteger(
+          productId
+        ) ||
+        productId <= 0
       ) {
 
-        return res.status(404).json({
-          success: false,
+        deleteUploadedFile(
+          req.file
+        );
+
+
+        return res.status(400).json({
+
+          success:
+            false,
+
           message:
-            "Product not found.",
+            "Invalid product ID.",
+
         });
 
       }
 
 
-      // -------------------------------------------------
-      // CHECK FILE
-      // -------------------------------------------------
+      // ===============================================
+      // CHECK PRODUCT
+      // ===============================================
 
-      if (!req.file) {
+      const [
+        products
+      ] = await db.query(
+        `
+        SELECT
+
+          id,
+
+          name,
+
+          image
+
+        FROM products
+
+        WHERE id = ?
+
+        LIMIT 1
+        `,
+        [
+          productId
+        ]
+      );
+
+
+      if (
+        products.length ===
+        0
+      ) {
+
+        deleteUploadedFile(
+          req.file
+        );
+
+
+        return res.status(404).json({
+
+          success:
+            false,
+
+          message:
+            "Product not found.",
+
+        });
+
+      }
+
+
+      // ===============================================
+      // CHECK FILE
+      // ===============================================
+
+      if (
+        !req.file
+      ) {
 
         return res.status(400).json({
-          success: false,
+
+          success:
+            false,
+
           message:
             "Please select an image.",
+
         });
 
       }
@@ -849,9 +1826,15 @@ router.put(
         products[0];
 
 
-      // -------------------------------------------------
+      // ===============================================
       // DELETE OLD UPLOADED IMAGE
-      // -------------------------------------------------
+      //
+      // Only delete images from:
+      //
+      // backend/uploads/products
+      //
+      // New frontend images are NOT deleted here.
+      // ===============================================
 
       if (
         product.image &&
@@ -864,6 +1847,7 @@ router.put(
           path.basename(
             product.image
           );
+
 
         const oldFilePath =
           path.join(
@@ -878,55 +1862,77 @@ router.put(
           )
         ) {
 
-          fs.unlinkSync(
-            oldFilePath
-          );
+          try {
+
+            fs.unlinkSync(
+              oldFilePath
+            );
+
+          } catch (deleteError) {
+
+            console.error(
+              "FAILED TO DELETE OLD PRODUCT IMAGE:",
+              deleteError
+            );
+
+          }
 
         }
 
       }
 
 
-      // -------------------------------------------------
+      // ===============================================
       // NEW IMAGE PATH
-      // -------------------------------------------------
+      // ===============================================
 
       const imagePath =
         `/uploads/products/${req.file.filename}`;
 
 
-      // -------------------------------------------------
-      // SAVE IMAGE PATH
-      // -------------------------------------------------
+      // ===============================================
+      // SAVE PATH
+      // ===============================================
 
       await db.query(
         `
         UPDATE products
 
-        SET image = ?
+        SET
+          image = ?
 
         WHERE id = ?
         `,
         [
+
           imagePath,
+
           productId,
+
         ]
       );
 
 
-      // -------------------------------------------------
+      // ===============================================
       // RETURN UPDATED PRODUCT
-      // -------------------------------------------------
+      // ===============================================
 
       const [
         updatedProducts
       ] = await db.query(
         `
         SELECT
+
           id,
+
+          category_id,
+
           name,
+
           price,
+
           image,
+
           is_available
 
         FROM products
@@ -935,13 +1941,16 @@ router.put(
 
         LIMIT 1
         `,
-        [productId]
+        [
+          productId
+        ]
       );
 
 
       return res.json({
 
-        success: true,
+        success:
+          true,
 
         message:
           "Product image updated successfully.",
@@ -960,9 +1969,17 @@ router.put(
       );
 
 
+      // Delete newly uploaded file if
+      // database update failed.
+      deleteUploadedFile(
+        req.file
+      );
+
+
       return res.status(500).json({
 
-        success: false,
+        success:
+          false,
 
         message:
           error.message ||
@@ -974,5 +1991,10 @@ router.put(
 
   }
 );
+
+
+// =====================================================
+// EXPORT
+// =====================================================
 
 module.exports = router;

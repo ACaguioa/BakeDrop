@@ -36,27 +36,70 @@ import ubeensaymada from "../../assets/products/ubeensaymada.jpg";
 // =====================================================
 
 const productImages = {
-  "assorted.jpg": assorted,
-  "banana.jpg": banana,
-  "cheesebread.jpg": cheesebread,
-  "cheesedesal.jpg": cheesedesal,
-  "chocoroll.jpg": chocoroll,
-  "customize.jpg": customize,
-  "donuts.jpg": donuts,
-  "eggpie.jpg": eggpie,
-  "ensaymada.jpg": ensaymada,
-  "garlic.jpg": garlic,
-  "kababayan.jpg": kababayan,
-  "loaf.jpg": loaf,
-  "mangoroll.jpg": mangoroll,
-  "mocharoll.jpg": mocharoll,
-  "pandecoco.jpg": pandecoco,
-  "pandesal.jpg": pandesal,
-  "pianono.jpg": pianono,
-  "raisin.jpg": raisin,
-  "spanish.jpg": spanish,
-  "ubedesal.jpg": ubedesal,
-  "ubeensaymada.jpg": ubeensaymada,
+
+  "assorted.jpg":
+    assorted,
+
+  "banana.jpg":
+    banana,
+
+  "cheesebread.jpg":
+    cheesebread,
+
+  "cheesedesal.jpg":
+    cheesedesal,
+
+  "chocoroll.jpg":
+    chocoroll,
+
+  "customize.jpg":
+    customize,
+
+  "donuts.jpg":
+    donuts,
+
+  "eggpie.jpg":
+    eggpie,
+
+  "ensaymada.jpg":
+    ensaymada,
+
+  "garlic.jpg":
+    garlic,
+
+  "kababayan.jpg":
+    kababayan,
+
+  "loaf.jpg":
+    loaf,
+
+  "mangoroll.jpg":
+    mangoroll,
+
+  "mocharoll.jpg":
+    mocharoll,
+
+  "pandecoco.jpg":
+    pandecoco,
+
+  "pandesal.jpg":
+    pandesal,
+
+  "pianono.jpg":
+    pianono,
+
+  "raisin.jpg":
+    raisin,
+
+  "spanish.jpg":
+    spanish,
+
+  "ubedesal.jpg":
+    ubedesal,
+
+  "ubeensaymada.jpg":
+    ubeensaymada,
+
 };
 
 
@@ -64,43 +107,101 @@ const productImages = {
 // IMAGE HELPER
 // =====================================================
 
-function getProductImage(image) {
+function getProductImage(
+  image
+) {
+
   if (!image) {
+
     return customize;
+
   }
 
+
   const filename =
-    String(image)
+    String(
+      image
+    )
       .split("/")
       .pop();
 
+
+  // ==============================================
   // Existing Vite/local image
-  if (productImages[filename]) {
-    return productImages[filename];
+  // ==============================================
+
+  if (
+    productImages[
+      filename
+    ]
+  ) {
+
+    return productImages[
+      filename
+    ];
+
   }
 
-  // Uploaded image from backend
+
+  // ==============================================
+  // Existing backend-uploaded image
+  // ==============================================
+
   if (
-    String(image).startsWith(
+    String(
+      image
+    ).startsWith(
       "/uploads/"
     )
   ) {
+
     return `http://localhost:5000${image}`;
+
   }
 
-  // Full URL
+
+  // ==============================================
+  // New product image
+  // saved to src/assets/products
+  // ==============================================
+
   if (
-    String(image).startsWith(
+    String(
+      image
+    ).startsWith(
+      "/src-assets/products/"
+    )
+  ) {
+
+    return `http://localhost:5000${image}`;
+
+  }
+
+
+  // ==============================================
+  // Full URL
+  // ==============================================
+
+  if (
+    String(
+      image
+    ).startsWith(
       "http://"
     ) ||
-    String(image).startsWith(
+    String(
+      image
+    ).startsWith(
       "https://"
     )
   ) {
+
     return image;
+
   }
 
+
   return customize;
+
 }
 
 
@@ -110,48 +211,113 @@ function getProductImage(image) {
 
 function AdminProducts() {
 
+
   // ===================================================
   // PRODUCTS
   // ===================================================
 
-  const [products, setProducts] =
-    useState([]);
+  const [
+    products,
+    setProducts
+  ] = useState([]);
 
-  const [loading, setLoading] =
-    useState(true);
 
-  const [error, setError] =
-    useState("");
+  const [
+    loading,
+    setLoading
+  ] = useState(true);
+
+
+  const [
+    error,
+    setError
+  ] = useState("");
 
 
   // ===================================================
   // EDITING PRODUCT
   // ===================================================
 
-  const [editingProduct, setEditingProduct] =
-    useState(null);
+  const [
+    editingProduct,
+    setEditingProduct
+  ] = useState(null);
 
 
   // ===================================================
-  // SELECTED IMAGE
+  // ADDING PRODUCT
   // ===================================================
 
-  const [selectedFile, setSelectedFile] =
-    useState(null);
+  const [
+    addingProduct,
+    setAddingProduct
+  ] = useState(false);
 
-  const [imagePreview, setImagePreview] =
-    useState(null);
+
+  const [
+    newProduct,
+    setNewProduct
+  ] = useState({
+
+    name: "",
+
+    description: "",
+
+    price: "",
+
+    is_available: true,
+
+  });
+
+
+  const [
+    newProductFile,
+    setNewProductFile
+  ] = useState(null);
+
+
+  const [
+    newProductPreview,
+    setNewProductPreview
+  ] = useState(null);
+
+
+  const [
+    creatingProduct,
+    setCreatingProduct
+  ] = useState(false);
+
+
+  // ===================================================
+  // SELECTED IMAGE FOR EDIT
+  // ===================================================
+
+  const [
+    selectedFile,
+    setSelectedFile
+  ] = useState(null);
+
+
+  const [
+    imagePreview,
+    setImagePreview
+  ] = useState(null);
 
 
   // ===================================================
   // SAVING
   // ===================================================
 
-  const [savingProduct, setSavingProduct] =
-    useState(false);
+  const [
+    savingProduct,
+    setSavingProduct
+  ] = useState(false);
 
-  const [uploadingImage, setUploadingImage] =
-    useState(false);
+
+  const [
+    uploadingImage,
+    setUploadingImage
+  ] = useState(false);
 
 
   // ===================================================
@@ -159,9 +325,11 @@ function AdminProducts() {
   // ===================================================
 
   function getToken() {
+
     return localStorage.getItem(
       "bakedrop-token"
     );
+
   }
 
 
@@ -169,9 +337,14 @@ function AdminProducts() {
   // LOAD PRODUCTS
   // ===================================================
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
+  useEffect(
+    () => {
+
+      fetchProducts();
+
+    },
+    []
+  );
 
 
   async function fetchProducts() {
@@ -179,6 +352,7 @@ function AdminProducts() {
     try {
 
       setLoading(true);
+
       setError("");
 
 
@@ -190,10 +364,14 @@ function AdminProducts() {
         await fetch(
           "http://localhost:5000/api/admin/products",
           {
+
             headers: {
+
               Authorization:
                 `Bearer ${token}`,
+
             },
+
           }
         );
 
@@ -202,25 +380,34 @@ function AdminProducts() {
         await response.json();
 
 
-      if (!response.ok) {
+      if (
+        !response.ok
+      ) {
 
         throw new Error(
           data.message ||
-            "Failed to load products."
+          "Failed to load products."
         );
 
       }
 
 
       setProducts(
+
         Array.isArray(
           data.products
         )
+
           ? data.products
+
           : []
+
       );
 
-    } catch (error) {
+
+    } catch (
+      error
+    ) {
 
       console.error(
         "Admin products error:",
@@ -230,12 +417,430 @@ function AdminProducts() {
 
       setError(
         error.message ||
-          "Failed to load products."
+        "Failed to load products."
       );
+
 
     } finally {
 
       setLoading(false);
+
+    }
+
+  }
+
+
+  // ===================================================
+  // OPEN ADD PRODUCT
+  // ===================================================
+
+  function handleOpenAddProduct() {
+
+    setNewProduct({
+
+      name: "",
+
+      description: "",
+
+      price: "",
+
+      is_available: true,
+
+    });
+
+
+    setNewProductFile(
+      null
+    );
+
+
+    setNewProductPreview(
+      null
+    );
+
+
+    setAddingProduct(
+      true
+    );
+
+  }
+
+
+  // ===================================================
+  // CLOSE ADD PRODUCT
+  // ===================================================
+
+  function handleCloseAddProduct() {
+
+    if (
+      creatingProduct
+    ) {
+
+      return;
+
+    }
+
+
+    setAddingProduct(
+      false
+    );
+
+
+    setNewProduct({
+
+      name: "",
+
+      description: "",
+
+      price: "",
+
+      is_available: true,
+
+    });
+
+
+    setNewProductFile(
+      null
+    );
+
+
+    setNewProductPreview(
+      null
+    );
+
+  }
+
+
+  // ===================================================
+  // NEW PRODUCT IMAGE
+  // ===================================================
+
+  function handleNewProductFileChange(
+    event
+  ) {
+
+    const file =
+      event.target.files?.[0];
+
+
+    if (!file) {
+
+      return;
+
+    }
+
+
+    const allowedTypes = [
+
+      "image/jpeg",
+
+      "image/png",
+
+      "image/webp",
+
+      "image/jpg",
+
+    ];
+
+
+    if (
+      !allowedTypes.includes(
+        file.type
+      )
+    ) {
+
+      alert(
+        "Please choose a JPG, JPEG, PNG, or WEBP image."
+      );
+
+
+      event.target.value =
+        "";
+
+
+      return;
+
+    }
+
+
+    const maximumSize =
+      5 * 1024 * 1024;
+
+
+    if (
+      file.size >
+      maximumSize
+    ) {
+
+      alert(
+        "Image must be 5 MB or smaller."
+      );
+
+
+      event.target.value =
+        "";
+
+
+      return;
+
+    }
+
+
+    setNewProductFile(
+      file
+    );
+
+
+    const previewUrl =
+      URL.createObjectURL(
+        file
+      );
+
+
+    setNewProductPreview(
+      previewUrl
+    );
+
+  }
+
+
+  // ===================================================
+  // CREATE PRODUCT
+  // ===================================================
+
+  async function handleCreateProduct() {
+
+    if (
+      !newProduct.name.trim()
+    ) {
+
+      alert(
+        "Please enter a product name."
+      );
+
+      return;
+
+    }
+
+
+    if (
+      !newProduct.description.trim()
+    ) {
+
+      alert(
+        "Please enter a product description."
+      );
+
+      return;
+
+    }
+
+
+    const price =
+      Number(
+        newProduct.price
+      );
+
+
+    if (
+      !Number.isFinite(
+        price
+      ) ||
+      price < 0
+    ) {
+
+      alert(
+        "Please enter a valid product price."
+      );
+
+      return;
+
+    }
+
+
+    if (
+      !newProductFile
+    ) {
+
+      alert(
+        "Please select a product image."
+      );
+
+      return;
+
+    }
+
+
+    try {
+
+      setCreatingProduct(
+        true
+      );
+
+
+      const token =
+        getToken();
+
+
+      const formData =
+        new FormData();
+
+
+      formData.append(
+        "name",
+        newProduct.name.trim()
+      );
+
+
+      formData.append(
+        "description",
+        newProduct.description.trim()
+      );
+
+
+      formData.append(
+        "price",
+        price
+      );
+
+
+      formData.append(
+        "is_available",
+        newProduct.is_available
+      );
+
+
+      formData.append(
+        "image",
+        newProductFile
+      );
+
+
+      const response =
+        await fetch(
+          "http://localhost:5000/api/products",
+          {
+
+            method:
+              "POST",
+
+            headers: {
+
+              Authorization:
+                `Bearer ${token}`,
+
+            },
+
+            body:
+              formData,
+
+          }
+        );
+
+
+      const data =
+        await response.json();
+
+
+      if (
+        !response.ok
+      ) {
+
+        throw new Error(
+          data.message ||
+          "Failed to create product."
+        );
+
+      }
+
+
+      // ===============================================
+      // ADD TO PRODUCT LIST
+      // ===============================================
+
+      setProducts(
+        (
+          currentProducts
+        ) => [
+
+          ...currentProducts,
+
+          data.product,
+
+        ].sort(
+          (
+            a,
+            b
+          ) =>
+            String(
+              a.name
+            ).localeCompare(
+              String(
+                b.name
+              )
+            )
+        )
+      );
+
+
+      // ===============================================
+      // CLOSE
+      // ===============================================
+
+      setAddingProduct(
+        false
+      );
+
+
+      setNewProduct({
+
+        name: "",
+
+        description: "",
+
+        price: "",
+
+        is_available: true,
+
+      });
+
+
+      setNewProductFile(
+        null
+      );
+
+
+      setNewProductPreview(
+        null
+      );
+
+
+      alert(
+        "Product created successfully."
+      );
+
+
+    } catch (
+      error
+    ) {
+
+      console.error(
+        "Create product error:",
+        error
+      );
+
+
+      alert(
+        error.message ||
+        "Failed to create product."
+      );
+
+
+    } finally {
+
+      setCreatingProduct(
+        false
+      );
 
     }
 
@@ -251,11 +856,16 @@ function AdminProducts() {
   ) {
 
     setEditingProduct({
+
       id:
         product.id,
 
       name:
         product.name,
+
+      description:
+        product.description ||
+        "",
 
       price:
         product.price,
@@ -275,6 +885,7 @@ function AdminProducts() {
       null
     );
 
+
     setImagePreview(
       null
     );
@@ -292,7 +903,9 @@ function AdminProducts() {
       uploadingImage ||
       savingProduct
     ) {
+
       return;
+
     }
 
 
@@ -300,9 +913,11 @@ function AdminProducts() {
       null
     );
 
+
     setSelectedFile(
       null
     );
+
 
     setImagePreview(
       null
@@ -312,7 +927,7 @@ function AdminProducts() {
 
 
   // ===================================================
-  // FILE SELECT
+  // EDIT IMAGE
   // ===================================================
 
   function handleFileChange(
@@ -324,15 +939,22 @@ function AdminProducts() {
 
 
     if (!file) {
+
       return;
+
     }
 
 
     const allowedTypes = [
+
       "image/jpeg",
+
       "image/png",
+
       "image/webp",
+
       "image/jpg",
+
     ];
 
 
@@ -346,10 +968,13 @@ function AdminProducts() {
         "Please choose a JPG, JPEG, PNG, or WEBP image."
       );
 
+
       event.target.value =
         "";
 
+
       return;
+
     }
 
 
@@ -366,10 +991,13 @@ function AdminProducts() {
         "Image must be 5 MB or smaller."
       );
 
+
       event.target.value =
         "";
 
+
       return;
+
     }
 
 
@@ -392,7 +1020,7 @@ function AdminProducts() {
 
 
   // ===================================================
-  // UPLOAD IMAGE
+  // UPLOAD EDIT IMAGE
   // ===================================================
 
   async function handleUploadImage() {
@@ -400,17 +1028,22 @@ function AdminProducts() {
     if (
       !editingProduct
     ) {
+
       return;
+
     }
 
 
-    if (!selectedFile) {
+    if (
+      !selectedFile
+    ) {
 
       alert(
         "Please select an image first."
       );
 
       return;
+
     }
 
 
@@ -439,15 +1072,20 @@ function AdminProducts() {
         await fetch(
           `http://localhost:5000/api/products/${editingProduct.id}/image`,
           {
-            method: "PUT",
+
+            method:
+              "PUT",
 
             headers: {
+
               Authorization:
                 `Bearer ${token}`,
+
             },
 
             body:
               formData,
+
           }
         );
 
@@ -456,47 +1094,65 @@ function AdminProducts() {
         await response.json();
 
 
-      if (!response.ok) {
+      if (
+        !response.ok
+      ) {
 
         throw new Error(
           data.message ||
-            "Failed to upload image."
+          "Failed to upload image."
         );
 
       }
 
 
-      // Update product list
       setProducts(
-        (currentProducts) =>
+        (
+          currentProducts
+        ) =>
+
           currentProducts.map(
-            (product) =>
-              Number(product.id) ===
+            (
+              product
+            ) =>
+
+              Number(
+                product.id
+              ) ===
               Number(
                 editingProduct.id
               )
+
                 ? {
+
                     ...product,
 
                     image:
                       data.product
                         ?.image ||
                       product.image,
+
                   }
+
                 : product
+
           )
+
       );
 
 
-      // Update modal
       setEditingProduct(
-        (current) => ({
+        (
+          current
+        ) => ({
+
           ...current,
 
           image:
             data.product
               ?.image ||
             current.image,
+
         })
       );
 
@@ -504,6 +1160,7 @@ function AdminProducts() {
       setSelectedFile(
         null
       );
+
 
       setImagePreview(
         null
@@ -514,7 +1171,10 @@ function AdminProducts() {
         "Product image updated successfully."
       );
 
-    } catch (error) {
+
+    } catch (
+      error
+    ) {
 
       console.error(
         "Upload image error:",
@@ -524,8 +1184,9 @@ function AdminProducts() {
 
       alert(
         error.message ||
-          "Failed to upload image."
+        "Failed to upload image."
       );
+
 
     } finally {
 
@@ -539,7 +1200,7 @@ function AdminProducts() {
 
 
   // ===================================================
-  // SAVE PRODUCT DETAILS
+  // SAVE PRODUCT
   // ===================================================
 
   async function handleSaveProduct() {
@@ -547,7 +1208,9 @@ function AdminProducts() {
     if (
       !editingProduct
     ) {
+
       return;
+
     }
 
 
@@ -571,6 +1234,7 @@ function AdminProducts() {
         );
 
         return;
+
       }
 
 
@@ -587,30 +1251,33 @@ function AdminProducts() {
         await fetch(
           `http://localhost:5000/api/admin/products/${editingProduct.id}`,
           {
-            method: "PUT",
+
+            method:
+              "PUT",
 
             headers: {
+
               "Content-Type":
                 "application/json",
 
               Authorization:
                 `Bearer ${token}`,
+
             },
 
             body:
               JSON.stringify({
+
                 price,
 
                 is_available:
                   editingProduct.is_available,
 
-                // Keep the database field
-                // unchanged because product
-                // schedule capacity is now
-                // controlled separately.
                 daily_order_limit:
                   0,
+
               }),
+
           }
         );
 
@@ -619,31 +1286,47 @@ function AdminProducts() {
         await response.json();
 
 
-      if (!response.ok) {
+      if (
+        !response.ok
+      ) {
 
         throw new Error(
           data.message ||
-            "Failed to update product."
+          "Failed to update product."
         );
 
       }
 
 
       setProducts(
-        (currentProducts) =>
+        (
+          currentProducts
+        ) =>
+
           currentProducts.map(
-            (product) =>
-              Number(product.id) ===
+            (
+              product
+            ) =>
+
+              Number(
+                product.id
+              ) ===
               Number(
                 editingProduct.id
               )
+
                 ? {
+
                     ...product,
 
                     ...data.product,
+
                   }
+
                 : product
+
           )
+
       );
 
 
@@ -666,7 +1349,10 @@ function AdminProducts() {
         "Product updated successfully."
       );
 
-    } catch (error) {
+
+    } catch (
+      error
+    ) {
 
       console.error(
         "Save product error:",
@@ -676,8 +1362,9 @@ function AdminProducts() {
 
       alert(
         error.message ||
-          "Failed to update product."
+        "Failed to update product."
       );
+
 
     } finally {
 
@@ -703,11 +1390,13 @@ function AdminProducts() {
     ).toLocaleString(
       "en-PH",
       {
+
         minimumFractionDigits:
           2,
 
         maximumFractionDigits:
           2,
+
       }
     );
 
@@ -718,9 +1407,12 @@ function AdminProducts() {
   // LOADING
   // ===================================================
 
-  if (loading) {
+  if (
+    loading
+  ) {
 
     return (
+
       <div className="admin-layout">
 
         <AdminNavbar />
@@ -732,7 +1424,9 @@ function AdminProducts() {
             <div className="admin-container">
 
               <div className="admin-loading">
+
                 Loading products...
+
               </div>
 
             </div>
@@ -744,6 +1438,7 @@ function AdminProducts() {
         <AdminFooter />
 
       </div>
+
     );
 
   }
@@ -754,6 +1449,7 @@ function AdminProducts() {
   // ===================================================
 
   return (
+
     <div className="admin-layout">
 
       <AdminNavbar />
@@ -766,46 +1462,73 @@ function AdminProducts() {
           <div className="admin-container">
 
 
-            {/* =================================================
+            {/* =========================================
                 HEADER
-            ================================================= */}
+            ========================================= */}
 
             <div className="admin-page-header">
 
-              <span className="admin-eyebrow">
-                BAKEDROP ADMIN
-              </span>
+              <div>
+
+                <span className="admin-eyebrow">
+
+                  BAKEDROP ADMIN
+
+                </span>
 
 
-              <h1>
-                Product <em>Management</em>
-              </h1>
+                <h1>
+
+                  Product <em>Management</em>
+
+                </h1>
 
 
-              <p>
-                Manage product prices,
-                availability, and images.
-              </p>
+                <p>
+
+                  Manage product prices,
+                  availability, and images.
+
+                </p>
+
+              </div>
+
+
+              <button
+                type="button"
+
+                className="admin-button"
+
+                onClick={
+                  handleOpenAddProduct
+                }
+              >
+
+                + Add Product
+
+              </button>
 
             </div>
 
 
-            {/* =================================================
+            {/* =========================================
                 ERROR
-            ================================================= */}
+            ========================================= */}
 
             {error && (
 
               <div className="admin-error">
+
                 {error}
+
               </div>
 
             )}
 
 
-            {/* =================================================
+            {/* =========================================
                 PRODUCT LIST
-            ================================================= */}
+            ========================================= */}
 
             <section className="admin-card">
 
@@ -814,20 +1537,27 @@ function AdminProducts() {
                 <div>
 
                   <span className="admin-eyebrow">
+
                     PRODUCTS
+
                   </span>
 
 
                   <h2>
+
                     BakeDrop Menu
+
                   </h2>
 
                 </div>
 
 
                 <span>
+
                   {products.length}{" "}
+
                   products
+
                 </span>
 
               </div>
@@ -836,7 +1566,9 @@ function AdminProducts() {
               <div className="admin-product-management-list">
 
                 {products.map(
-                  (product) => (
+                  (
+                    product
+                  ) => (
 
                     <div
                       key={
@@ -846,10 +1578,7 @@ function AdminProducts() {
                       className="admin-product-management-row"
                     >
 
-
-                      {/* =====================================
-                          IMAGE
-                      ===================================== */}
+                      {/* IMAGE */}
 
                       <div className="admin-product-image">
 
@@ -868,74 +1597,87 @@ function AdminProducts() {
                       </div>
 
 
-                      {/* =====================================
-                          INFORMATION
-                      ===================================== */}
+                      {/* INFORMATION */}
 
                       <div className="admin-product-management-info">
 
                         <span className="admin-eyebrow">
+
                           {
                             product.category_name ||
                             "Bakery"
                           }
+
                         </span>
 
 
                         <h3>
+
                           {
                             product.name
                           }
+
                         </h3>
 
 
                         <strong>
+
                           ₱
+
                           {
                             formatPrice(
                               product.price
                             )
                           }
+
                         </strong>
 
                       </div>
 
 
-                      {/* =====================================
-                          AVAILABILITY
-                      ===================================== */}
+                      {/* AVAILABILITY */}
 
                       <div className="admin-product-availability">
 
                         <span>
+
                           AVAILABILITY
+
                         </span>
 
 
                         <strong>
+
                           {
                             product.is_available
+
                               ? "Available"
+
                               : "Unavailable"
                           }
+
                         </strong>
 
                       </div>
 
 
-                      {/* =====================================
-                          ACTION
-                      ===================================== */}
+                      {/* ACTION */}
 
                       <button
                         type="button"
+
                         className="admin-button-small"
+
                         onClick={() =>
-                            handleEditProduct(product)
+                          handleEditProduct(
+                            product
+                          )
                         }
-                        >
+                      >
+
                         Edit
-                        </button>
+
+                      </button>
 
                     </div>
 
@@ -975,24 +1717,25 @@ function AdminProducts() {
             }
           >
 
-
-            {/* =============================================
-                HEADER
-            ============================================= */}
+            {/* HEADER */}
 
             <div className="admin-modal-header">
 
               <div>
 
                 <span className="admin-eyebrow">
+
                   PRODUCT MANAGEMENT
+
                 </span>
 
 
                 <h2>
+
                   {
                     editingProduct.name
                   }
+
                 </h2>
 
               </div>
@@ -1007,15 +1750,15 @@ function AdminProducts() {
                   handleCloseEdit
                 }
               >
+
                 ×
+
               </button>
 
             </div>
 
 
-            {/* =============================================
-                PRODUCT IMAGE
-            ============================================= */}
+            {/* IMAGE */}
 
             <div className="admin-product-edit-image">
 
@@ -1035,14 +1778,14 @@ function AdminProducts() {
             </div>
 
 
-            {/* =============================================
-                CHANGE IMAGE
-            ============================================= */}
+            {/* CHANGE IMAGE */}
 
             <div className="admin-detail-section">
 
               <h3>
+
                 Product Image
+
               </h3>
 
 
@@ -1068,8 +1811,10 @@ function AdminProducts() {
 
 
               <small>
+
                 JPG, JPEG, PNG, or WEBP.
                 Maximum 5 MB.
+
               </small>
 
 
@@ -1078,9 +1823,11 @@ function AdminProducts() {
                 <div className="admin-image-upload-actions">
 
                   <span>
+
                     {
                       selectedFile.name
                     }
+
                   </span>
 
 
@@ -1099,7 +1846,9 @@ function AdminProducts() {
                   >
 
                     {uploadingImage
+
                       ? "Uploading..."
+
                       : "Upload Image"}
 
                   </button>
@@ -1111,14 +1860,14 @@ function AdminProducts() {
             </div>
 
 
-            {/* =============================================
-                PRICE
-            ============================================= */}
+            {/* PRICE */}
 
             <div className="admin-detail-section">
 
               <h3>
+
                 Price
+
               </h3>
 
 
@@ -1135,12 +1884,15 @@ function AdminProducts() {
 
                 onChange={(event) =>
                   setEditingProduct(
-                    (current) => ({
+                    (
+                      current
+                    ) => ({
+
                       ...current,
 
                       price:
-                        event.target
-                          .value,
+                        event.target.value,
+
                     })
                   )
                 }
@@ -1153,14 +1905,14 @@ function AdminProducts() {
             </div>
 
 
-            {/* =============================================
-                AVAILABILITY
-            ============================================= */}
+            {/* AVAILABILITY */}
 
             <div className="admin-detail-section">
 
               <h3>
+
                 Availability
+
               </h3>
 
 
@@ -1173,13 +1925,16 @@ function AdminProducts() {
 
                 onChange={(event) =>
                   setEditingProduct(
-                    (current) => ({
+                    (
+                      current
+                    ) => ({
+
                       ...current,
 
                       is_available:
-                        event.target
-                          .value ===
+                        event.target.value ===
                         "available",
+
                     })
                   )
                 }
@@ -1190,12 +1945,16 @@ function AdminProducts() {
               >
 
                 <option value="available">
+
                   Available
+
                 </option>
 
 
                 <option value="unavailable">
+
                   Unavailable
+
                 </option>
 
               </select>
@@ -1203,9 +1962,7 @@ function AdminProducts() {
             </div>
 
 
-            {/* =============================================
-                BUTTONS
-            ============================================= */}
+            {/* BUTTONS */}
 
             <div className="admin-modal-actions">
 
@@ -1223,7 +1980,9 @@ function AdminProducts() {
                   uploadingImage
                 }
               >
+
                 Cancel
+
               </button>
 
 
@@ -1243,8 +2002,393 @@ function AdminProducts() {
               >
 
                 {savingProduct
+
                   ? "Saving..."
+
                   : "Save Changes"}
+
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      )}
+
+
+      {/* =================================================
+          ADD PRODUCT MODAL
+      ================================================= */}
+
+      {addingProduct && (
+
+        <div
+          className="admin-modal-backdrop"
+
+          onClick={
+            handleCloseAddProduct
+          }
+        >
+
+          <div
+            className="admin-modal"
+
+            onClick={(event) =>
+              event.stopPropagation()
+            }
+          >
+
+            {/* HEADER */}
+
+            <div className="admin-modal-header">
+
+              <div>
+
+                <span className="admin-eyebrow">
+
+                  PRODUCT MANAGEMENT
+
+                </span>
+
+
+                <h2>
+
+                  Add New Product
+
+                </h2>
+
+              </div>
+
+
+              <button
+                type="button"
+
+                className="admin-modal-close"
+
+                onClick={
+                  handleCloseAddProduct
+                }
+
+                disabled={
+                  creatingProduct
+                }
+              >
+
+                ×
+
+              </button>
+
+            </div>
+
+
+            {/* IMAGE PREVIEW */}
+
+            <div className="admin-product-edit-image">
+
+              <img
+                src={
+                  newProductPreview ||
+                  customize
+                }
+
+                alt="New product preview"
+              />
+
+            </div>
+
+
+            {/* PRODUCT IMAGE */}
+
+            <div className="admin-detail-section">
+
+              <h3>
+
+                Product Image
+
+              </h3>
+
+
+              <input
+                type="file"
+
+                accept="
+                  image/jpeg,
+                  image/jpg,
+                  image/png,
+                  image/webp
+                "
+
+                onChange={
+                  handleNewProductFileChange
+                }
+
+                disabled={
+                  creatingProduct
+                }
+              />
+
+
+              <small>
+
+                JPG, JPEG, PNG, or WEBP.
+                Maximum 5 MB.
+
+              </small>
+
+
+              {newProductFile && (
+
+                <div className="admin-image-upload-actions">
+
+                  <span>
+
+                    {
+                      newProductFile.name
+                    }
+
+                  </span>
+
+                </div>
+
+              )}
+
+            </div>
+
+
+            {/* PRODUCT NAME */}
+
+            <div className="admin-detail-section">
+
+              <h3>
+
+                Product Name
+
+              </h3>
+
+
+              <input
+                type="text"
+
+                value={
+                  newProduct.name
+                }
+
+                placeholder="Enter product name"
+
+                onChange={(event) =>
+                  setNewProduct(
+                    (
+                      current
+                    ) => ({
+
+                      ...current,
+
+                      name:
+                        event.target.value,
+
+                    })
+                  )
+                }
+
+                disabled={
+                  creatingProduct
+                }
+              />
+
+            </div>
+
+
+            {/* DESCRIPTION */}
+
+            <div className="admin-detail-section">
+
+              <h3>
+
+                Description
+
+              </h3>
+
+
+              <textarea
+                value={
+                  newProduct.description
+                }
+
+                placeholder="Enter product description"
+
+                rows="4"
+
+                onChange={(event) =>
+                  setNewProduct(
+                    (
+                      current
+                    ) => ({
+
+                      ...current,
+
+                      description:
+                        event.target.value,
+
+                    })
+                  )
+                }
+
+                disabled={
+                  creatingProduct
+                }
+              />
+
+            </div>
+
+
+            {/* PRICE */}
+
+            <div className="admin-detail-section">
+
+              <h3>
+
+                Price
+
+              </h3>
+
+
+              <input
+                type="number"
+
+                min="0"
+
+                step="0.01"
+
+                value={
+                  newProduct.price
+                }
+
+                placeholder="0.00"
+
+                onChange={(event) =>
+                  setNewProduct(
+                    (
+                      current
+                    ) => ({
+
+                      ...current,
+
+                      price:
+                        event.target.value,
+
+                    })
+                  )
+                }
+
+                disabled={
+                  creatingProduct
+                }
+              />
+
+            </div>
+
+
+            {/* AVAILABILITY */}
+
+            <div className="admin-detail-section">
+
+              <h3>
+
+                Availability
+
+              </h3>
+
+
+              <select
+                value={
+                  newProduct.is_available
+                    ? "available"
+                    : "unavailable"
+                }
+
+                onChange={(event) =>
+                  setNewProduct(
+                    (
+                      current
+                    ) => ({
+
+                      ...current,
+
+                      is_available:
+                        event.target.value ===
+                        "available",
+
+                    })
+                  )
+                }
+
+                disabled={
+                  creatingProduct
+                }
+              >
+
+                <option value="available">
+
+                  Available
+
+                </option>
+
+
+                <option value="unavailable">
+
+                  Unavailable
+
+                </option>
+
+              </select>
+
+            </div>
+
+
+            {/* BUTTONS */}
+
+            <div className="admin-modal-actions">
+
+              <button
+                type="button"
+
+                className="admin-button-secondary"
+
+                onClick={
+                  handleCloseAddProduct
+                }
+
+                disabled={
+                  creatingProduct
+                }
+              >
+
+                Cancel
+
+              </button>
+
+
+              <button
+                type="button"
+
+                className="admin-button"
+
+                onClick={
+                  handleCreateProduct
+                }
+
+                disabled={
+                  creatingProduct
+                }
+              >
+
+                {creatingProduct
+
+                  ? "Creating..."
+
+                  : "Add Product"}
 
               </button>
 
@@ -1260,7 +2404,9 @@ function AdminProducts() {
       <AdminFooter />
 
     </div>
+
   );
+
 }
 
 
